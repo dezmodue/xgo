@@ -14,6 +14,7 @@
 #   OUT         - Optional output prefix to override the package name
 #   FLAG_V      - Optional verbosity flag to set on the Go builder
 #   FLAG_RACE   - Optional race flag to set on the Go builder
+#   TARGETS     - Optional comma delimited list of targets arch to build
 
 # Download the canonical import path (may fail, don't allow failures beyond)
 echo "Fetching main repository $1..."
@@ -22,6 +23,8 @@ set -e
 
 cd $GOPATH/src/$1
 export GOPATH=$GOPATH:`pwd`/Godeps/_workspace
+
+
 
 # Switch over the code-base to another checkout if requested
 if [ "$REPO_REMOTE" != "" ]; then
@@ -64,40 +67,53 @@ if [ "$FLAG_V" == "true" ]; then V=-v; fi
 if [ "$FLAG_RACE" == "true" ]; then R=-race; fi
 
 # Build for each platform individually
-echo "Compiling for linux/amd64..."
-HOST=x86_64-linux PREFIX=/usr/local $BUILD_DEPS /deps
-GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
-GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-linux-amd64$R ./$PACK
+if [ "${LINUX64}" = "true" ];then
+    echo "Compiling for linux/amd64..."
+    HOST=x86_64-linux PREFIX=/usr/local $BUILD_DEPS /deps
+    GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
+    GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-linux-amd64$R ./$PACK
+fi
 
-echo "Compiling for linux/386..."
-HOST=i686-linux PREFIX=/usr/local $BUILD_DEPS /deps
-GOOS=linux GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
-GOOS=linux GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-linux-386 ./$PACK
+if [ "${LINUX386}" = "true" ];then
+    echo "Compiling for linux/386..."
+    HOST=i686-linux PREFIX=/usr/local $BUILD_DEPS /deps
+    GOOS=linux GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
+    GOOS=linux GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-linux-386 ./$PACK
+fi
 
-echo "Compiling for linux/arm..."
-CC=arm-linux-gnueabi-gcc HOST=arm-linux PREFIX=/usr/local/arm $BUILD_DEPS /deps
-CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm CGO_ENABLED=1 GOARM=5 go get -d ./$PACK
-CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm CGO_ENABLED=1 GOARM=5 go build $V -o $NAME-linux-arm ./$PACK
+if [ "${LINUXARM}" = "true" ];then
+    echo "Compiling for linux/arm..."
+    CC=arm-linux-gnueabi-gcc HOST=arm-linux PREFIX=/usr/local/arm $BUILD_DEPS /deps
+    CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm CGO_ENABLED=1 GOARM=5 go get -d ./$PACK
+    CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm CGO_ENABLED=1 GOARM=5 go build $V -o $NAME-linux-arm ./$PACK
+fi
 
-echo "Compiling for windows/amd64..."
-CC=x86_64-w64-mingw32-gcc HOST=x86_64-w64-mingw32 PREFIX=/usr/x86_64-w64-mingw32 $BUILD_DEPS /deps
-CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
-CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-windows-amd64$R.exe ./$PACK
+if [ "${WINDOWS64}" = "true" ];then
+    echo "Compiling for windows/amd64..."
+    CC=x86_64-w64-mingw32-gcc HOST=x86_64-w64-mingw32 PREFIX=/usr/x86_64-w64-mingw32 $BUILD_DEPS /deps
+    CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
+    CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-windows-amd64$R.exe ./$PACK
+fi
 
-echo "Compiling for windows/386..."
-CC=i686-w64-mingw32-gcc HOST=i686-w64-mingw32 PREFIX=/usr/i686-w64-mingw32 $BUILD_DEPS /deps
-CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
-CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-windows-386.exe ./$PACK
+if [ "${WINDOWS386}" = "true" ];then
+    echo "Compiling for windows/386..."
+    CC=i686-w64-mingw32-gcc HOST=i686-w64-mingw32 PREFIX=/usr/i686-w64-mingw32 $BUILD_DEPS /deps
+    CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
+    CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-windows-386.exe ./$PACK
+fi
 
-echo "Compiling for darwin/amd64..."
-CC=o64-clang HOST=x86_64-apple-darwin10 PREFIX=/usr/local $BUILD_DEPS /deps
-CC=o64-clang GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
-CC=o64-clang GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-darwin-amd64$R ./$PACK
+if [ "${DARWIN64}" = "true" ];then
+    echo "Compiling for darwin/amd64..."
+    CC=o64-clang HOST=x86_64-apple-darwin10 PREFIX=/usr/local $BUILD_DEPS /deps
+    CC=o64-clang GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go get -d ./$PACK
+    CC=o64-clang GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build $V $R -o $NAME-darwin-amd64$R ./$PACK
+fi
 
-echo "Compiling for darwin/386..."
-CC=o32-clang HOST=i386-apple-darwin10 PREFIX=/usr/local $BUILD_DEPS /deps
-CC=o32-clang GOOS=darwin GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
-CC=o32-clang GOOS=darwin GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-darwin-386 ./$PACK
-
+if [ "${DARWIN386}" = "true" ];then
+    echo "Compiling for darwin/386..."
+    CC=o32-clang HOST=i386-apple-darwin10 PREFIX=/usr/local $BUILD_DEPS /deps
+    CC=o32-clang GOOS=darwin GOARCH=386 CGO_ENABLED=1 go get -d ./$PACK
+    CC=o32-clang GOOS=darwin GOARCH=386 CGO_ENABLED=1 go build $V -o $NAME-darwin-386 ./$PACK
+fi
 echo "Moving binaries to host..."
 cp `ls -t | head -n 7` /build
